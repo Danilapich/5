@@ -1,0 +1,94 @@
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class das {
+    private static final String HISTORY_FILE = "history.txt";
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        List<String> history = loadHistory();
+
+        while (true) {
+            System.out.println("Введите выражение (или 'выход' для завершения):");
+            String input = scanner.nextLine();
+
+            if (input.equalsIgnoreCase("выход")) {
+                break;
+            }
+
+            try {
+                // Вычисляем результат выражения
+                double result = evaluateExpression(input);
+
+                // Выводим результат на экран
+                System.out.println("Результат: " + result);
+
+                // Добавляем выражение в историю
+                history.add(input + " = " + result);
+                saveHistory(history);
+            } catch (Exception e) {
+                System.out.println("Ошибка при вычислении выражения: " + e.getMessage());
+            }
+        }
+    }
+
+    private static double evaluateExpression(String expression) {
+        // Используем регулярное выражение для разбора выражения
+        Pattern pattern = Pattern.compile("(-?\\d+(\\.\\d+)?)\\s*([-+*/^])\\s*(-?\\d+(\\.\\d+)?)");
+        Matcher matcher = pattern.matcher(expression);
+
+        if (matcher.find()) {
+            double num1 = Double.parseDouble(matcher.group(1));
+            String operator = matcher.group(3);
+            double num2 = Double.parseDouble(matcher.group(4));
+
+            switch (operator) {
+                case "+":
+                    return num1 + num2;
+                case "-":
+                    return num1 - num2;
+                case "*":
+                    return num1 * num2;
+                case "/":
+                    if (num2 == 0) {
+                        throw new ArithmeticException("Деление на ноль!");
+                    }
+                    return num1 / num2;
+                case "^":
+                    return Math.pow(num1, num2);
+                default:
+                    throw new IllegalArgumentException("Недопустимый оператор: " + operator);
+            }
+        } else {
+            throw new IllegalArgumentException("Неверный формат выражения");
+        }
+    }
+
+    private static List<String> loadHistory() {
+        List<String> history = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new FileReader(HISTORY_FILE))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                history.add(line);
+            }
+        } catch (IOException e) {
+            System.out.println("Ошибка при загрузке истории: " + e.getMessage());
+        }
+        return history;
+    }
+
+    private static void saveHistory(List<String> history) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(HISTORY_FILE))) {
+            for (String entry : history) {
+                writer.write(entry);
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            System.out.println("Ошибка при сохранении истории: " + e.getMessage());
+        }
+    }
+}
